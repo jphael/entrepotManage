@@ -4,11 +4,11 @@ export class CustomMesh {
     customName: string;
     isSelected: boolean;
     mesh: THREE.Mesh;
+    carton?: THREE.Mesh;
     constructor(mesh:THREE.Mesh) {
         this.customName = ""
         this.isSelected = false
-        this.mesh = mesh
-        
+        this.mesh = mesh        
       }
     getSelected(){
         return this.isSelected;
@@ -25,5 +25,6 @@ export class CustomMesh {
     {
         this.isSelected = !this.isSelected;
         this.isSelected ? this.mesh.material = new THREE.MeshStandardMaterial({color: 0xE70D2B}) : this.mesh.material = new THREE.MeshStandardMaterial({color: 0x0DE74C})
+        if(this.carton != null)this.carton.visible = this.isSelected
     }
   }
