@@ -59,17 +59,18 @@ let intersectedObject: THREE.Object3D | null;
 const loader = new GLTFLoader();
 
 loader.load(
-  "models/mariah.glb",
+  "models/final.glb",
   function (gltf) {
     gltf.scene.traverse(function (child) {
       if ((child as THREE.Mesh).isMesh) {
         const m = child as THREE.Mesh;
         m.receiveShadow = true;
         m.castShadow = true;
+        //console.log(m.name);
         (m.material as THREE.MeshStandardMaterial).flatShading = true;
         //m.material = new THREE.MeshStandardMaterial({color: 0xffffff * Math.random()});
 
-        if (m.name.includes("Mesh_palette")) {
+        if (m.name.includes("palette_")) {
           //rouge
           //m.material = new THREE.MeshStandardMaterial({color: 0xFF0000});
           //console.log('hitany ilay batiment-----'+m.name);
@@ -231,3 +232,28 @@ function render() {
 }
 
 animate();
+
+$("#validate").on('click',(event: JQuery.Event) => {
+  const request = new Request('http://wez.mg/services/', {headers: {
+    'Content-Type': 'application/json'
+},} );
+
+const URL = request.url;
+const method = request.method;
+const credentials = request.credentials;
+fetch(request)
+  .then(response => {
+    if (response.status === 200) {
+      console.log(response.json());
+      return response.json();
+    } else {
+      throw new Error('Something went wrong on api server!');
+    }
+  })
+  .then(response => {
+    console.debug(response);
+    // ...
+  }).catch(error => {
+    console.error(error);
+  });
+ });
