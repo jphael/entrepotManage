@@ -3,6 +3,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import Stats from "three/examples/jsm/libs/stats.module";
 import { CustomMesh } from "./CustomMesh";
+import { MeshModel } from "./MeshModel";
 import * as $ from "jquery";
 import { Mesh } from "three";
 import { Vector3 } from "three/src/math/Vector3";
@@ -10,6 +11,7 @@ import { Vector3 } from "three/src/math/Vector3";
 var currentSelected: Mesh;
 var listRack: Array<CustomMesh>;
 listRack = new Array();
+var listRackFromDB: Array<MeshModel>;
 const scene = new THREE.Scene();
 scene.add(new THREE.AxesHelper(5));
 scene.background = new THREE.Color(0xccffff);
@@ -57,7 +59,6 @@ const sceneMeshes: THREE.Object3D[] = [];
 let intersectedObject: THREE.Object3D | null;
 
 const loader = new GLTFLoader();
-
 loader.load(
   "models/final.glb",
   function (gltf) {
@@ -70,7 +71,8 @@ loader.load(
         (m.material as THREE.MeshStandardMaterial).flatShading = true;
         //m.material = new THREE.MeshStandardMaterial({color: 0xffffff * Math.random()});
 
-        if (m.name.includes("palette_")) {
+        if (m.name.includes("Palette_")) {
+          console.log(m.name);
           //rouge
           //m.material = new THREE.MeshStandardMaterial({color: 0xFF0000});
           //console.log('hitany ilay batiment-----'+m.name);
@@ -174,32 +176,7 @@ function positionClicked(position: Vector3,o:CustomMesh) {
   $("#myIdToShow").show();
 }
 
-function onDoubleClick(event: MouseEvent) {
-  const mouse = {
-    x: (event.clientX / renderer.domElement.clientWidth) * 2 - 1,
-    y: -(event.clientY / renderer.domElement.clientHeight) * 2 + 1,
-  };
-  raycaster.setFromCamera(mouse, camera);
 
-  const intersects = raycaster.intersectObjects(sceneMeshes, false);
-
-  if (intersects.length > 0) {
-    const n = new THREE.Vector3();
-    n.copy((intersects[0].face as THREE.Face).normal);
-    n.transformDirection(intersects[0].object.matrixWorld);
-
-    const cube = new THREE.Mesh(boxGeometry, material);
-    //const cube = new THREE.Mesh(coneGeometry, material)
-
-    cube.lookAt(n);
-    cube.rotateX(Math.PI / 2);
-    cube.position.copy(intersects[0].point);
-    cube.position.addScaledVector(n, 0.1);
-
-    scene.add(cube);
-    sceneMeshes.push(cube);
-  }
-}
 
 var hemiLight = new THREE.HemisphereLight(0xffffff, 0x0000ff);
 hemiLight.position.set(0, 300, 0);
@@ -234,9 +211,12 @@ function render() {
 animate();
 
 $("#validate").on('click',(event: JQuery.Event) => {
-  const request = new Request('http://wez.mg/services/', {headers: {
-    'Content-Type': 'application/json'
-},} );
+  const headers = {'Content-Type':'application/json',
+  'Access-Control-Allow-Origin':'*',
+  'Access-Control-Allow-Methods':'GET,POST,PATCH,OPTIONS'}
+
+  const request = new Request('https://dummy.restapiexample.com/api/v1/employees', {headers: headers,} );
+
 
 const URL = request.url;
 const method = request.method;
@@ -257,3 +237,77 @@ fetch(request)
     console.error(error);
   });
  });
+
+ $("#icClose").on('click',(event: JQuery.Event) => {
+  //getListeReserved()
+  $("#myIdToShow").hide();
+  });
+
+  getAll()
+  function getAll()
+  {
+
+    console.log('--------begin')
+async function fetchPokemon() {
+  const response = await window.fetch('http://127.0.0.1:8003/updatePalette', {
+    // learn more about this API here: https://graphql-pokemon2.vercel.app/
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json;charset=UTF-8',
+    },
+    body: JSON.stringify({
+      query: "",
+      variables: {name: 'name'},
+    }),
+  })
+
+  const {data, errors} = await response.json()
+  if (response.ok) {
+    console.log('--------pokemon ok-----')
+    const pokemon = data?.pokemon
+    if (pokemon) {
+      // add fetchedAt helper (used in the UI to help differentiate requests)
+      console.log('--------pokemon'+pokemon)
+    } else {
+      console.log('--------pokemon else')
+    }
+  } else {
+    // handle the graphql errors
+    console.log('--------errrrrror')
+  }
+
+  console.log('--------end')
+}
+/*
+    $.ajax({
+      type:  "GET",
+      dataType:  "json",
+      url:  'http://127.0.0.1:8003/updatePalette',
+      success:  function(data){
+          console.log(data);
+      }
+    });
+    fetch("http://127.0.0.1:8003/updatePalette")
+    .then(response => {
+      if (!response.ok) {
+        console.log('errrrror fetch-----')
+        throw new Error(response.statusText)
+      }
+      console.log('mety fetch-----'+response)
+      //return response.json<T>()
+    })*/
+
+  }
+function getListeReservedFromDB() {
+  //recuperation de la liste dans la base
+  listRackFromDB.forEach((o: MeshModel, i) => {
+    //var result = listRack.filter(e => e.mesh.name === 'Palette_B3503') 
+    var result = listRack.filter(e => e.mesh.name === o.name) 
+  if(result.length > 0) {
+     //console.log('result-----'+result)
+    //result[0].mesh.material = new THREE.MeshStandardMaterial({color: 0xDDE70D})
+  }
+  })
+  
+ 
+}
