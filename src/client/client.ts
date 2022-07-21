@@ -1,9 +1,11 @@
+
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import Stats from "three/examples/jsm/libs/stats.module";
 import { CustomMesh } from "./CustomMesh";
 import { MeshModel } from "./MeshModel";
+import { DataResponse } from "./DataResponse";
 import * as $ from "jquery";
 import { Mesh } from "three";
 import { Vector3 } from "three/src/math/Vector3";
@@ -72,7 +74,7 @@ loader.load(
         //m.material = new THREE.MeshStandardMaterial({color: 0xffffff * Math.random()});
 
         if (m.name.includes("Palette_")) {
-          console.log(m.name);
+          //console.log(m.name);
           //rouge
           //m.material = new THREE.MeshStandardMaterial({color: 0xFF0000});
           //console.log('hitany ilay batiment-----'+m.name);
@@ -92,14 +94,17 @@ loader.load(
       }
     });
     scene.add(gltf.scene);
-    // sceneMeshes.push(gltf.scene)
   },
   (xhr) => {
     console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+    if(xhr.loaded == xhr.total){
+      getList()
+    }
   },
   (error) => {
     console.log(error);
-  }
+  },
+  
 );
 
 window.addEventListener("resize", onWindowResize, false);
@@ -153,13 +158,12 @@ function onMouseMove(event: MouseEvent) {
       $("#myIdToShow").hide();
       o.updateColorMaterial();
       if (o.isSelected) {
-        positionClicked(intersectedObject.position,o);
-        
+        positionClicked(intersectedObject.position, o);
       }
     }
   });
 }
-function positionClicked(position: Vector3,o:CustomMesh) {
+function positionClicked(position: Vector3, o: CustomMesh) {
   var v = position.project(camera);
   var width: number = 0;
   var height: number = 0;
@@ -175,8 +179,6 @@ function positionClicked(position: Vector3,o:CustomMesh) {
   $(".meshe-price").text("Prix : 12 €");
   $("#myIdToShow").show();
 }
-
-
 
 var hemiLight = new THREE.HemisphereLight(0xffffff, 0x0000ff);
 hemiLight.position.set(0, 300, 0);
@@ -210,104 +212,83 @@ function render() {
 
 animate();
 
-$("#validate").on('click',(event: JQuery.Event) => {
-  const headers = {'Content-Type':'application/json',
-  'Access-Control-Allow-Origin':'*',
-  'Access-Control-Allow-Methods':'GET,POST,PATCH,OPTIONS'}
+$("#validate").on("click", (event: JQuery.Event) => {
+  const headers = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+  };
 
-  const request = new Request('https://dummy.restapiexample.com/api/v1/employees', {headers: headers,} );
+  const request = new Request(
+    "https://dummy.restapiexample.com/api/v1/employees",
+    { headers: headers }
+  );
 
+  const URL = request.url;
+  const method = request.method;
+  const credentials = request.credentials;
+  fetch(request)
+    .then((response) => {
+      if (response.status === 200) {
+        console.log(response.json());
+        return response.json();
+      } else {
+        throw new Error("Something went wrong on api server!");
+      }
+    })
+    .then((response) => {
+      console.debug(response);
+      // ...
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+});
 
-const URL = request.url;
-const method = request.method;
-const credentials = request.credentials;
-fetch(request)
-  .then(response => {
-    if (response.status === 200) {
-      console.log(response.json());
-      return response.json();
-    } else {
-      throw new Error('Something went wrong on api server!');
-    }
-  })
-  .then(response => {
-    console.debug(response);
-    // ...
-  }).catch(error => {
-    console.error(error);
-  });
- });
-
- $("#icClose").on('click',(event: JQuery.Event) => {
+$("#icClose").on("click", (event: JQuery.Event) => {
   //getListeReserved()
   $("#myIdToShow").hide();
-  });
+});
 
-  getAll()
-  function getAll()
-  {
 
-    console.log('--------begin')
-async function fetchPokemon() {
-  const response = await window.fetch('http://127.0.0.1:8003/updatePalette', {
-    // learn more about this API here: https://graphql-pokemon2.vercel.app/
-    method: 'GET',
-    headers: {
-      'content-type': 'application/json;charset=UTF-8',
-    },
-    body: JSON.stringify({
-      query: "",
-      variables: {name: 'name'},
-    }),
-  })
-
-  const {data, errors} = await response.json()
-  if (response.ok) {
-    console.log('--------pokemon ok-----')
-    const pokemon = data?.pokemon
-    if (pokemon) {
-      // add fetchedAt helper (used in the UI to help differentiate requests)
-      console.log('--------pokemon'+pokemon)
-    } else {
-      console.log('--------pokemon else')
-    }
-  } else {
-    // handle the graphql errors
-    console.log('--------errrrrror')
-  }
-
-  console.log('--------end')
-}
-/*
-    $.ajax({
-      type:  "GET",
-      dataType:  "json",
-      url:  'http://127.0.0.1:8003/updatePalette',
-      success:  function(data){
-          console.log(data);
-      }
+async function getList() {
+  try {
+    const response = await fetch('http://127.0.0.1:8003/listPalette', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+      },
     });
-    fetch("http://127.0.0.1:8003/updatePalette")
-    .then(response => {
-      if (!response.ok) {
-        console.log('errrrror fetch-----')
-        throw new Error(response.statusText)
-      }
-      console.log('mety fetch-----'+response)
-      //return response.json<T>()
-    })*/
+ 
 
+    if (!response.ok) {
+      throw new Error(`Error! status: ${response.status}`);
+    }
+
+    const result = await response.json()
+    //const itemListResponse: MeshModel[] = <MeshModel[]>JSON.parse(result);
+
+    //console.log('result--------'+JSON.stringify(result));
+   // console.log
+   let obj: DataResponse = JSON.parse(JSON.stringify(result));
+   listRackFromDB = obj.list;
+   getListeReservedFromDB()
+  } catch (err) {
+    console.log(err);
   }
+}
+
+
 function getListeReservedFromDB() {
   //recuperation de la liste dans la base
+  console.log('niantso tato-----'+listRackFromDB.length)
   listRackFromDB.forEach((o: MeshModel, i) => {
-    //var result = listRack.filter(e => e.mesh.name === 'Palette_B3503') 
-    var result = listRack.filter(e => e.mesh.name === o.name) 
-  if(result.length > 0) {
-     //console.log('result-----'+result)
-    //result[0].mesh.material = new THREE.MeshStandardMaterial({color: 0xDDE70D})
-  }
-  })
-  
- 
+    console.log('boucle-----'+o.name)
+    //var result = listRack.filter(e => e.mesh.name === 'Palette_B3503')
+    var result = listRack.filter((e) => e.mesh.name === o.name);
+    if (result.length > 0) {
+      console.log('nahita-----'+o.name)
+      result[0].mesh.material = new THREE.MeshStandardMaterial({color: 0xDDE70D})
+    }
+  });
 }
