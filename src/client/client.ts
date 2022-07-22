@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { LoadingManager } from "three/src/loaders/LoadingManager";
 import Stats from "three/examples/jsm/libs/stats.module";
 import { CustomMesh } from "./CustomMesh";
 import { MeshModel } from "./MeshModel";
@@ -59,10 +60,11 @@ const coneGeometry = new THREE.ConeGeometry(0.05, 0.2, 8);
 const raycaster = new THREE.Raycaster();
 const sceneMeshes: THREE.Object3D[] = [];
 let intersectedObject: THREE.Object3D | null;
-
-const loader = new GLTFLoader();
+const manager = new LoadingManager()
+const loader = new GLTFLoader(manager);
+manager.itemStart('final')
 loader.load(
-  "models/final.glb",
+  "models/entrepot.glb",
   function (gltf) {
     gltf.scene.traverse(function (child) {
       if ((child as THREE.Mesh).isMesh) {
@@ -92,20 +94,24 @@ loader.load(
         l.shadow.mapSize.width = 2048;
         l.shadow.mapSize.height = 2048;
       }
+      manager.itemEnd( 'final' );
     });
     scene.add(gltf.scene);
   },
   (xhr) => {
     console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-    if(xhr.loaded == xhr.total){
-      getList()
-    }
+    
   },
   (error) => {
     console.log(error);
   },
   
 );
+
+manager.onLoad = function () {
+  console.log('---------------everything is done---------------');
+  getList()
+};
 
 window.addEventListener("resize", onWindowResize, false);
 function onWindowResize() {
