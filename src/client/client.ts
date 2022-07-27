@@ -8,6 +8,7 @@ import { CustomMesh } from "./CustomMesh";
 import { MeshModel } from "./MeshModel";
 import { DataResponse } from "./DataResponse";
 import * as $ from "jquery";
+import * as bootstrap from "bootstrap";
 import { Mesh } from "three";
 import { Vector3 } from "three/src/math/Vector3";
 
@@ -64,25 +65,36 @@ const manager = new LoadingManager()
 const loader = new GLTFLoader(manager);
 manager.itemStart('final')
 loader.load(
-  "models/entrepot.glb",
+  "models/final.glb", 
   function (gltf) {
     gltf.scene.traverse(function (child) {
       if ((child as THREE.Mesh).isMesh) {
         const m = child as THREE.Mesh;
         m.receiveShadow = true;
         m.castShadow = true;
-        //console.log(m.name);
+        //console.log('--'+m.name);
         (m.material as THREE.MeshStandardMaterial).flatShading = true;
         //m.material = new THREE.MeshStandardMaterial({color: 0xffffff * Math.random()});
-
-        if (m.name.includes("Palette_")) {
+        if (m.name.includes("PL_")) {
           //console.log(m.name);
           //rouge
           //m.material = new THREE.MeshStandardMaterial({color: 0xFF0000});
           //console.log('hitany ilay batiment-----'+m.name);
           var tempCustomMesh = new CustomMesh(m);
           listRack.push(tempCustomMesh);
-        } else {
+          //m.visible = false;
+        }
+         else if (m.name.includes("CR_")) {
+          //console.log('--'+m.name);
+          var splitted = m.name.split("_",2);
+          var paleteNameToFind = 'PL_'+splitted[1]+'_1'
+          //console.log('tofind--'+paleteNameToFind);
+          listRack.forEach((o: CustomMesh, i) => {
+            if (paleteNameToFind === o.mesh.name) {
+              console.log('nahita--');
+              o.setCarton(m)
+            }
+          });
           //console.log(m.name);
         }
         sceneMeshes.push(m);
@@ -110,7 +122,12 @@ loader.load(
 
 manager.onLoad = function () {
   console.log('---------------everything is done---------------');
-  getList()
+  //getList()
+  listRack.forEach((o: CustomMesh, i) => {
+    console.log(o.mesh.name+'--'+o.carton?.name);
+  });
+  
+  
 };
 
 window.addEventListener("resize", onWindowResize, false);
@@ -130,41 +147,32 @@ function onMouseMove(event: MouseEvent) {
     y: -(event.clientY / renderer.domElement.clientHeight) * 2 + 1,
   };
 
-  // console.log(mouse)
 
   raycaster.setFromCamera(mouse, camera);
 
   const intersects = raycaster.intersectObjects(sceneMeshes, false);
+  
 
   if (intersects.length > 0) {
     intersectedObject = intersects[0].object;
+    console.log('name clicked '+intersectedObject.name);
   } else {
     intersectedObject = null;
   }
+  //if(!intersectedObject || !(intersectedObject.name.includes("PL_")) || !(intersectedObject.name.includes("CR_"))) return
+  var myModal = new bootstrap.Modal("#myModal", {});
+  $('#category').val("testaaaaaaaaaaa");
 
+  
+
+  myModal.show()
   listRack.forEach((o: CustomMesh, i) => {
-    if (intersectedObject && intersectedObject.name === o.mesh.name) {
-      if (o.carton == null) {
-        const cube = new THREE.Mesh(
-          boxGeometry,
-          new THREE.MeshStandardMaterial({ color: 0xad8762 })
-        );
-        const n = new THREE.Vector3();
-        n.copy((intersects[0].face as THREE.Face).normal);
-        n.copy((intersects[0].face as THREE.Face).normal);
-        n.transformDirection(intersects[0].object.matrixWorld);
-        cube.lookAt(n);
-        cube.rotateX(Math.PI / 2);
-        cube.position.copy(intersects[0].point);
-        cube.position.addScaledVector(n, 0.1);
-        o.carton = cube;
-        scene.add(o.carton);
-        sceneMeshes.push(o.carton);
-      }
+    if ((intersectedObject && intersectedObject.name === o.mesh.name) || (intersectedObject && intersectedObject.name === o.carton?.name)) {
+      
       $("#myIdToShow").hide();
       o.updateColorMaterial();
       if (o.isSelected) {
-        positionClicked(intersectedObject.position, o);
+       // positionClicked(intersectedObject.position, o);
       }
     }
   });
@@ -181,11 +189,14 @@ function positionClicked(position: Vector3, o: CustomMesh) {
   $("#myIdToShow").css({ left: left, top: top });
   console.log(o.mesh.name);
   $(".meshe-name").text(o.mesh.name);
-  $(".meshe-place").text("Place : Exterme à droite");
-  $(".meshe-price").text("Prix : 12 €");
+  $(".meshe-place").text("Etage : "+o.etage);
+  $(".meshe-price").text("rack : "+o.rack);
   $("#myIdToShow").show();
+  
 }
 
+//($('#myModal') as any ).show()
+//(<any>$('#myModal')).modal('show'); 
 var hemiLight = new THREE.HemisphereLight(0xffffff, 0x0000ff);
 hemiLight.position.set(0, 300, 0);
 scene.add(hemiLight);
@@ -217,6 +228,10 @@ function render() {
 }
 
 animate();
+
+$("#btnSend").on("click", (event: JQuery.Event) => {
+  console.log("---------click send")
+});
 
 $("#validate").on("click", (event: JQuery.Event) => {
   const headers = {
@@ -287,14 +302,14 @@ async function getList() {
 
 function getListeReservedFromDB() {
   //recuperation de la liste dans la base
-  console.log('niantso tato-----'+listRackFromDB.length)
   listRackFromDB.forEach((o: MeshModel, i) => {
-    console.log('boucle-----'+o.name)
+    //console.log('boucle-----'+o.name)
     //var result = listRack.filter(e => e.mesh.name === 'Palette_B3503')
     var result = listRack.filter((e) => e.mesh.name === o.name);
     if (result.length > 0) {
-      console.log('nahita-----'+o.name)
-      result[0].mesh.material = new THREE.MeshStandardMaterial({color: 0xDDE70D})
+      //console.log('nahita-----'+o.name)
+      //result[0].mesh.material = new THREE.MeshStandardMaterial({color: 0xDDE70D})
+      //result[0].setInfoFromDB(o)
     }
   });
 }

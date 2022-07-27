@@ -1,14 +1,18 @@
 
 import * as THREE from 'three'
+import { MeshModel } from './MeshModel'
 export class CustomMesh {
-    customName: string;
-    isSelected: boolean;
-    mesh: THREE.Mesh;
-    carton?: THREE.Mesh;
+    customName: string
+    isSelected: boolean
+    mesh: THREE.Mesh
+    carton?: THREE.Mesh
+    etage?:number
+    colonne? :number
+    rack? : string
     constructor(mesh:THREE.Mesh) {
-        this.customName = ""
+        this.customName = mesh.name
         this.isSelected = false
-        this.mesh = mesh        
+        this.mesh = mesh      
       }
     getSelected(){
         return this.isSelected;
@@ -16,6 +20,17 @@ export class CustomMesh {
     setSelected(state:boolean){
         this.isSelected = state;
     }
+    setCarton(carton:THREE.Mesh){
+      carton.visible = false;
+      this.carton = carton;
+  }
+  setInfoFromDB(meshModel :MeshModel)
+  {
+    this.etage = meshModel.etage
+    this.colonne = meshModel.colonne
+    this.rack = meshModel.rack
+
+  }
    
     showName() {
         console.log('----------niantso constructeur---------'); 

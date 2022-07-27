@@ -18,12 +18,16 @@
       integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css"
+    />
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
       crossorigin="anonymous"
     ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   </head>
 
   <body>
@@ -33,14 +37,125 @@
       style="position: absolute; display: none"
       class="border-info border-2 rounded"
     >
-        <div class="text-info border p-5" style="background-color: white;">
-          <div class="position-relative"><i class="bi bi-x-circle-fill position-absolute top-0 end-0" id="icClose"></i></div>
-          <p class="meshe-name">Meshe name</p>
-          <p class="meshe-place">Emplacement</p>
-          <p class="meshe-price">Prix</p>
-          <button type="button" id="validate" name="action" value="validate" class="btn btn-primary">Reserver</button>
+      <div class="text-info border p-5" style="background-color: white">
+        <div class="position-relative">
+          <i
+            class="bi bi-x-circle-fill position-absolute top-0 end-0"
+            id="icClose"
+          ></i>
         </div>
-           
+        <p class="meshe-name">Meshe name</p>
+        <p class="meshe-place">Emplacement</p>
+        <p class="meshe-price">Prix</p>
+        <button
+          type="button"
+          id="validate"
+          name="action"
+          value="validate"
+          class="btn btn-primary"
+        >
+          Reserver
+        </button>
+      </div>
     </div>
+
+    <!-- Modal Service -->
+    <div
+      class="modal fade"
+      id="myModal"
+      tabindex="-1"
+      aria-labelledby="myModal"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          
+            <input type="hidden" name="_token" value="{{ csrf_token() }}" />
+            <div class="modal-header">
+              <h5 class="modal-title" id="myModal">
+                Information et Reservation
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3 row">
+                <div class="col-md-6">
+                  <label class="form-label">Rack : Rangé A</label>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Prix par palette : 25€</label>
+                </div>
+              </div>
+              
+              <div class="mb-3 row">
+                <div class="col-md-3">
+                  <input type="checkbox" id="check_1" name="check_1" />
+                  <label for="check_1">Etage 1 colonne 1</label>
+                </div>
+                <div class="col-md-3">
+                  <input type="checkbox" id="check_2" name="check_2" />
+                  <label for="check_2">Etage 1 colonne 2</label>
+                </div>
+                <div class="col-md-3">
+                  <input type="checkbox" id="check_3" name="check_3" />
+                  <label for="check_3">Etage 1 colonne 3</label>
+                </div>
+                <div class="col-md-3">
+                  <input type="checkbox" id="check_4" name="check_4" />
+                  <label for="check_4">Etage 1 colonne 3</label>
+                </div>
+              </div>
+
+              <div class="mb-3 row modal-header">
+                <h5 class="modal-title" id="myModal">
+                  Veuillez remplir pour reserver
+                </h5>
+              </div>
+              <div class="mb-3 row">
+                <div class="col-md-6">
+                  <label class="form-label">Catégorie</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="category"
+                    id="category"
+                    placeholder="Catégorie"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Client</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="name"
+                    id="name"
+                    placeholder="Nom du client"
+                    required
+                  />
+                </div>
+              </div>
+
+              <input type="hidden" name="ttc" id="ttc" value="0" />
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Fermer
+              </button>
+              <button type="submit" id="btnSend" class="btn btn-primary">Reserver</button>
+            </div>
+        </div>
+      </div>
+    </div>
+    <!-- end Modal Service-->
   </body>
 </html>
