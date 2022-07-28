@@ -1,24 +1,25 @@
 
-import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { LoadingManager } from "three/src/loaders/LoadingManager";
-import Stats from "three/examples/jsm/libs/stats.module";
-import { CustomMesh } from "./CustomMesh";
-import { MeshModel } from "./MeshModel";
-import { DataResponse } from "./DataResponse";
-import * as $ from "jquery";
-import * as bootstrap from "bootstrap";
-import { Mesh } from "three";
-import { Vector3 } from "three/src/math/Vector3";
-
-var currentSelected: Mesh;
-var listRack: Array<CustomMesh>;
-listRack = new Array();
-var listRackFromDB: Array<MeshModel>;
-const scene = new THREE.Scene();
-scene.add(new THREE.AxesHelper(5));
-scene.background = new THREE.Color(0xccffff);
+import * as THREE from "three"
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
+import { LoadingManager } from "three/src/loaders/LoadingManager"
+import Stats from "three/examples/jsm/libs/stats.module"
+import { CustomMesh } from "./CustomMesh"
+import { MeshModel } from "./MeshModel"
+import { DataResponse } from "./DataResponse"
+import * as $ from "jquery"
+import * as bootstrap from "bootstrap"
+import { Mesh } from "three"
+import { Vector3 } from "three/src/math/Vector3"
+var myModal : bootstrap.Modal
+var currentSelected: Mesh
+var listRack: Array<CustomMesh>
+var listIdCheckBox : string[] = new Array()
+listRack = new Array()
+var listRackFromDB: Array<MeshModel>
+const scene = new THREE.Scene()
+scene.add(new THREE.AxesHelper(5))
+scene.background = new THREE.Color(0xccffff)
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -76,7 +77,7 @@ loader.load(
         (m.material as THREE.MeshStandardMaterial).flatShading = true;
         //m.material = new THREE.MeshStandardMaterial({color: 0xffffff * Math.random()});
         if (m.name.includes("PL_")) {
-          //console.log(m.name);
+          console.log(m.name);
           //rouge
           //m.material = new THREE.MeshStandardMaterial({color: 0xFF0000});
           //console.log('hitany ilay batiment-----'+m.name);
@@ -91,7 +92,7 @@ loader.load(
           //console.log('tofind--'+paleteNameToFind);
           listRack.forEach((o: CustomMesh, i) => {
             if (paleteNameToFind === o.mesh.name) {
-              console.log('nahita--');
+              //console.log('nahita--');
               o.setCarton(m)
             }
           });
@@ -160,17 +161,11 @@ function onMouseMove(event: MouseEvent) {
     intersectedObject = null;
   }
   //if(!intersectedObject || !(intersectedObject.name.includes("PL_")) || !(intersectedObject.name.includes("CR_"))) return
-  var myModal = new bootstrap.Modal("#myModal", {});
-  $('#category').val("testaaaaaaaaaaa");
-
-  
-
-  myModal.show()
   listRack.forEach((o: CustomMesh, i) => {
     if ((intersectedObject && intersectedObject.name === o.mesh.name) || (intersectedObject && intersectedObject.name === o.carton?.name)) {
-      
-      $("#myIdToShow").hide();
-      o.updateColorMaterial();
+      paletteByRack()
+      //$("#myIdToShow").hide();
+      //o.updateColorMaterial();
       if (o.isSelected) {
        // positionClicked(intersectedObject.position, o);
       }
@@ -230,48 +225,104 @@ function render() {
 animate();
 
 $("#btnSend").on("click", (event: JQuery.Event) => {
-  console.log("---------click send")
+  
+  var idPaletteSelected : string[]  = new Array()
+  listIdCheckBox.forEach((idPalette:string) => {
+  
+    if($('#' + idPalette).is(":checked")) {
+      
+      idPaletteSelected.push(idPalette)
+      listRack.forEach((o: CustomMesh, i) => {
+        if (intersectedObject && intersectedObject.name === o.mesh.name) {
+          o.updateColorMaterial();
+        }
+      });
+    }
+    
+
+
+  });
+  console.log("---------list palette selectionner--"+ idPaletteSelected)
+  myModal.hide()
 });
 
-$("#validate").on("click", (event: JQuery.Event) => {
-  const headers = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
-  };
+function resetAllData(){
+  listIdCheckBox = new Array()
+  $("#wsresult").html("")
 
-  const request = new Request(
-    "https://dummy.restapiexample.com/api/v1/employees",
-    { headers: headers }
-  );
+}
+async function paletteByRack() {
+  resetAllData()
+  try {
+    const response = await fetch('http://127.0.0.1:8003/palette-rack', {
+      method: 'post',
+      headers: { 
+        accept: 'application/json',
+      }, 
+      body:new URLSearchParams("rack=AAA1&colonne=1")
+    }); 
+ 
 
-  const URL = request.url;
-  const method = request.method;
-  const credentials = request.credentials;
-  fetch(request)
-    .then((response) => {
-      if (response.status === 200) {
-        console.log(response.json());
-        return response.json();
-      } else {
-        throw new Error("Something went wrong on api server!");
-      }
-    })
-    .then((response) => {
-      console.debug(response);
-      // ...
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+    if (!response.ok) {
+      throw new Error(`Error! status: ${response.status}`);
+    }
+
+    const result = await response.json()
+
+    //console.log('result ws--------'+JSON.stringify(result));
+   let obj: DataResponse = JSON.parse(JSON.stringify(result));
+   var listPaletteByRack: Array<MeshModel>;
+   listPaletteByRack = obj.list;
+   const myMap: Map<number, [MeshModel]> = new Map();
+ 
+ listPaletteByRack.forEach((itemModel: MeshModel, j) => {
+  if(myMap.get(itemModel.etage)  && myMap.has(itemModel.etage)){
+    var currentList = myMap.get(itemModel.etage)
+    //currentList?.push("Etage "+itemModel.etage + " colonne "+itemModel.palette_position)
+    currentList?.push(itemModel)
+  }else{
+    myMap.set(itemModel.etage,[itemModel])
+  }
 });
 
-$("#icClose").on("click", (event: JQuery.Event) => {
-  //getListeReserved()
-  $("#myIdToShow").hide();
-});
+var divPalette =  $("#wsresult")
+myMap.forEach((value: [MeshModel], key: number) => {
+  //console.log(key, value);
+  var divEtage = `<div class='mb-3 row'>`
+  divPalette.append(divEtage)
+  value.forEach((curentValue:MeshModel) => {
+    //console.log(curentValue);
+    var name : string  = curentValue.name
+    var palettePosition = curentValue.palette_position
+    var paleteEtage = curentValue.etage
+    var classColMD3  = `class='col-md-3'`
+    var strPalettePosition = `Etage ${paleteEtage}  colonne ${palettePosition}` 
+    var enableColor = `accent-color: green`
+    var disableColor = `accent-color: red`
+    var checkDiv = ''
+    if(curentValue.is_reserved)
+    {
+       checkDiv = `<div ${classColMD3}><input disabled type='checkbox' id=${name}  name=${name} /><label for=${name}>${strPalettePosition} </label></div>`
+    }
+    else{
+      listIdCheckBox.push(name)
+       checkDiv = `<div ${classColMD3}><input  type='checkbox' id=${name}  name=${name} /><label for=${name}>${strPalettePosition} </label></div>`
+    }
+    divPalette.append(checkDiv)
+  });
+  var divEtageEnd = "</div>"
+  divPalette.append(divEtageEnd)
 
+})
 
+  myModal = new bootstrap.Modal("#myModal", {});
+  //$('#category').val("testaaaaaaaaaaa");
+  myModal.show()
+  } catch (err) {
+    console.log(err)
+  }
+}
+ 
 async function getList() {
   try {
     const response = await fetch('http://127.0.0.1:8003/listPalette', {

@@ -6,5 +6,7 @@ export interface MeshModel {
     etage: number
     colonne: number
     rack:string
+    palette_position :number
+    is_reserved:boolean
    
   }
