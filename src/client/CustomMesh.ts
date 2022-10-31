@@ -29,7 +29,7 @@ export class CustomMesh {
     this.etage = meshModel.etage
     this.colonne = meshModel.colonne
     this.rack = meshModel.rack
-
+    console.log('----------rack---------'+this.rack); 
   }
    
     showName() {

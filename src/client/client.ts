@@ -64,33 +64,32 @@ let intersectedObject: THREE.Object3D | null;
 const manager = new LoadingManager();
 const loader = new GLTFLoader(manager);
 manager.itemStart("final");
+var countPLA =0;
+
 loader.load(
-  "models/final.glb",
+  "models/factory.glb",
   function (gltf) {
     gltf.scene.traverse(function (child) {
       if ((child as THREE.Mesh).isMesh) {
         const m = child as THREE.Mesh;
         m.receiveShadow = true;
         m.castShadow = true;
-        //console.log("" + m.name);
         (m.material as THREE.MeshStandardMaterial).flatShading = true;
         //m.material = new THREE.MeshStandardMaterial({color: 0xffffff * Math.random()});
-
-        if (m.name.includes("PL_")) {
-          console.log('newName---'+m.name);
+        //console.log('newName---'+m.name);
+        if (m.name.includes("PL_") ) {
+          countPLA ++;
+         console.log(m.name);
           //rouge
-          //m.material = new THREE.MeshStandardMaterial({color: 0xFF0000});
+          m.material = new THREE.MeshStandardMaterial({color: 0x79c753});
             var tempCustomMesh = new CustomMesh(m);
             listRack.push(tempCustomMesh);
-            //console.log('-- taille palette '+listRack.length);
           //m.visible = false;
         } else if (m.name.includes("CR_")) {
-          //console.log('--'+m.name);
           var splitted = m.name.split("_", 2);
           var paleteNameToFind = "PL_" + splitted[1];
           listRack.forEach((o: CustomMesh, i) => {
             if (paleteNameToFind === o.mesh.name) {
-              //console.log('nahita--');
               o.setCarton(m);
             }
           });
@@ -144,18 +143,21 @@ function onMouseMove(event: MouseEvent) {
 
   if (intersects.length > 0) {
     intersectedObject = intersects[0].object;
+
     console.log("name clicked " + intersectedObject.name);
+    //paletteByRack('17')
+
   } else {
     intersectedObject = null;
   }
-  //if(!intersectedObject || !(intersectedObject.name.includes("PL_")) || !(intersectedObject.name.includes("CR_"))) return
+  if(!intersectedObject || !(intersectedObject.name.includes("PL_")) ) return
   listRack.forEach((o: CustomMesh, i) => {
     if (
       (intersectedObject && intersectedObject.name === o.mesh.name) ||
       (intersectedObject && intersectedObject.name === o.carton?.name)
     ) {
-      paletteByRack();
-      //$("#myIdToShow").hide();
+      if(o.rack)paletteByRack(o.rack);// ito no averina atsoina fa amzao atao mipoitra fona
+      
       o.updateColorMaterial();
       if (o.isSelected) {
         // positionClicked(intersectedObject.position, o);
@@ -227,9 +229,8 @@ $("#btnSend").on("click", (event: JQuery.Event) => {
       });
     }
   });
-  //console.log("---------list palette  params--" + JSON.stringify(idPaletteSelected));
   myModal.hide();
-  updateStatus(idPaletteSelected);
+  //updateStatus(idPaletteSelected);  desactiver pour le moment à activer 
 });
 
 async function updateStatus(params : string[]) {
@@ -260,21 +261,21 @@ function resetAllData() {
   listIdCheckBox = new Array();
   $("#wsresult").html("");
 }
-async function paletteByRack() {
+async function paletteByRack(rack:string) {
   resetAllData();
   try {
+    console.log('rack selected------'+rack)
     const response = await fetch("http://127.0.0.1:8003/palette-rack", {
       method: "post",
       headers: {
         accept: "application/json",
       },
-      body: new URLSearchParams("rack=AAA1&colonne=1"),
+      body: new URLSearchParams("rack="+rack),
     });
 
     if (!response.ok) {
       throw new Error(`Error! status: ${response.status}`);
     }
-
     const result = await response.json();
 
     let obj: DataResponse = JSON.parse(JSON.stringify(result));
@@ -283,7 +284,7 @@ async function paletteByRack() {
     const myMap: Map<number, [MeshModel]> = new Map();
 
     listPaletteByRack.forEach((itemModel: MeshModel, j) => {
-      if (myMap.get(itemModel.etage) && myMap.has(itemModel.etage)) {
+      if (myMap.has(itemModel.etage)) {
         var currentList = myMap.get(itemModel.etage);
         //currentList?.push("Etage "+itemModel.etage + " colonne "+itemModel.palette_position)
         currentList?.push(itemModel);
@@ -291,14 +292,16 @@ async function paletteByRack() {
         myMap.set(itemModel.etage, [itemModel]);
       }
     });
-
     var divPalette = $("#wsresult");
     myMap.forEach((value: [MeshModel], key: number) => {
+      //$('#titre_rack').val("Allée B  Rack "+value[0].rack);
+      var allee = 'A';
+      $('#titre_rack').text("Allée "+ allee +" Rack "+value[0].rack);
       var divEtage = `<div class='mb-3 row'>`;
       divPalette.append(divEtage);
       value.forEach((curentValue: MeshModel) => {
-        var name: string = curentValue.name;
-        var palettePosition = curentValue.palette_position;
+        var name: string = curentValue.nom;
+        var palettePosition = curentValue.colonne;
         var paleteEtage = curentValue.etage;
         var classColMD3 = `class='col-md-3'`;
         var strPalettePosition = `Etage ${paleteEtage}  position ${palettePosition}`;
@@ -318,7 +321,6 @@ async function paletteByRack() {
     });
 
     myModal = new bootstrap.Modal("#myModal", {});
-    //$('#category').val("testaaaaaaaaaaa");
     myModal.show();
   } catch (err) {
     console.log(err);
@@ -351,13 +353,27 @@ async function getList() {
 }
 
 function getListeReservedFromDB() {
-  //recuperation de la liste dans la base
+  var count =0;
   listRackFromDB.forEach((o: MeshModel, i) => {
-    //var result = listRack.filter(e => e.mesh.name === 'Palette_B3503')
-    var result = listRack.filter((e) => e.mesh.name === o.name);
-    if (result.length > 0) {
-      //result[0].mesh.material = new THREE.MeshStandardMaterial({color: 0xDDE70D})
-      //result[0].setInfoFromDB(o)
-    }
+    
+    //à regarder io fonction filtre io dia soloina ilay boucle 
+    //var result = listRack.filter((e) => e.mesh.name === o.name);
+    listRack.forEach((item: CustomMesh, j) => {
+      //console.log('-rack--'+o.nom+'  result----'+item.mesh.name);
+      if (item.mesh.name === o.nom) {
+       // console.log('-rack--'+o.nom+'result----'+item.mesh.name);
+        item.setInfoFromDB(o);
+        //item.mesh.material = new THREE.MeshStandardMaterial({color: 0x79c753});
+       
+    /*if (result.length > 0) {
+      count ++;
+        result[0].setInfoFromDB(o)
+        result[0].mesh.material = new THREE.MeshStandardMaterial({color: 0x79c753});
+
+    }*/
+     }
+   });
+    
   });
+  console.log('countPLA--------'+countPLA);
 }

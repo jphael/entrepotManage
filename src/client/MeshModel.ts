@@ -2,11 +2,13 @@
 import * as THREE from 'three'
 export interface MeshModel {
     id:number
-    name: string
+    nom: string
+    allee: string
+    rack:string
     etage: number
     colonne: number
-    rack:string
-    palette_position :number
+    prix:string
+    carton:string
     is_reserved:boolean
    
   }
